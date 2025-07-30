@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- ONE collage image that swaps on hover -->
+<div id="door-wrapper">
+  <img id="main-door" src="https://cdn.jsdelivr.net/gh/EvanPFWang/door-images-cdn@main/images/KRK6Z_U2A8-m.png" alt="Door collage">
+</div>
+
+<script>
+  /* === CONFIG === */
+  const repoBase   = "https://cdn.jsdelivr.net/gh/EvanPFWang/door-images-cdn@main/images/";
+  const baseImage  = "KRK6Z_U2A8-m.png";   // all doors closed
+  const numDoors   = 12;                   // 00‑11
+  const columns    = 6;                    // collage = 2 rows × 6 columns
+  const rows       = 2;
+
+  /* Utility – 2‑digit string */
+  const pad = n => n.toString().padStart(2, "0");
+
+  const wrapper = document.getElementById("door-wrapper");
+  const mainImg = document.getElementById("main-door");
+  wrapper.style.position = "relative";
+
+  /* Create transparent hot‑spots */
+  const pctW = 100 / columns;  // each box width 16.66%
+  const pctH = 100 / rows;     // each box height 50%
+
+  for (let i = 0; i < numDoors; i++) {
+    const idx  = pad(i);
+    const col  = i % columns;
+    const row  = Math.floor(i / columns);
+
+    /* Invisible overlay */
+    const spot = document.createElement("div");
+    spot.className = "door-hotspot";
+    spot.style.cssText = `
+      position:absolute;
+      left:${col * pctW}%;
+      top:${row * pctH}%;
+      width:${pctW}%;
+      height:${pctH}%;
+      cursor:pointer;
+    `;
+
+    /* Pre‑compute target src */
+    const halfSrc = `${repoBase}door_${idx}_half.png`;
+
+    spot.addEventListener("mouseover", () => { mainImg.src = halfSrc; });
+    spot.addEventListener("mouseout",  () => { mainImg.src = repoBase + baseImage; });
+
+    wrapper.appendChild(spot);
+  }
+</script>
+
+<style>
+/* Responsive collage sizing */
+#main-door {
+  width: 100%;          /* keep aspect‑ratio */
+  height: auto;
+  display: block;
+  transition: transform 0.3s ease-in-out;
+}
+#door-wrapper:hover #main-door {
+  transform: scale(1.02); /* subtle zoom */
+}
+</style>
+</body>
+</html>

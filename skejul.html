@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- =========================================================
+     Calendly inline embed for evanpfwang.com
+     – keeps your original <div> but layers in:
+       • auto‑resize       (data-resize="true")
+       • cosmetic options  (hide profile header, hide GDPR banner)
+       • dynamic pre‑fill  (?name=…&email=…)  + UTM passthrough
+       • postMessage hook  (calendly.event_scheduled, etc.)
+     ======================================================= -->
+
+<!-- Calendly inline widget begin -->
+<div id="cal-embed"
+     class="calendly-inline-widget"
+     data-url="https://calendly.com/evanpfwang"
+     data-resize="true"                          <!-- auto‑height -->
+     style="min-width:320px;height:700px;"></div>
+<link rel="stylesheet"
+      href="https://assets.calendly.com/assets/external/widget.css">
+<script async
+        src="https://assets.calendly.com/assets/external/widget.js"></script>
+<!-- Calendly inline widget end -->
+
+<script>
+/*------------------------------------------------------------------
+  Build a clean Calendly URL that merges:
+    • cosmetic query‑params      (hide banner, details)
+    • any UTM tags already on the page
+    • optional ?name / ?email    pre‑fill values
+  Then load the inline widget via Calendly.initInlineWidget().
+------------------------------------------------------------------*/
+(function () {
+  const qpIn  = new URLSearchParams(window.location.search);
+  const qpOut = new URLSearchParams({
+    hide_event_type_details : '1',  // strip profile header
+    hide_gdpr_banner        : '1'   // remove cookie banner
+  }); // :contentReference[oaicite:0]{index=0}
+
+  /* ---- Pass through common UTM parameters, if present ---- */
+  ['utm_source','utm_medium','utm_campaign','utm_term','utm_content']
+    .forEach(k => { if (qpIn.has(k)) qpOut.set(k, qpIn.get(k)); });
+  // :contentReference[oaicite:1]{index=1}
+
+  /* ---- Optional pre‑fill for name & email fields ---- */
+  if (qpIn.has('name'))  qpOut.set('name',  qpIn.get('name'));
+  if (qpIn.has('email')) qpOut.set('email', qpIn.get('email'));
+  // :contentReference[oaicite:2]{index=2}
+
+  const fullUrl = 'https://calendly.com/evanpfwang?' + qpOut.toString();
+
+  /* ---- Replace the data‑url (so <div> keeps in sync) ---- */
+  const target = document.getElementById('cal-embed');
+  target.setAttribute('data-url', fullUrl);
+
+  /* ---- Render the scheduler (auto‑resize honoured via data-resize) ---- */
+  Calendly.initInlineWidget({
+    url          : fullUrl,
+    parentElement: target,
+    // The SDK lets you pass prefill/utm objects directly,
+    // but we’ve already embedded them in the URL for transparency.
+    // :contentReference[oaicite:3]{index=3}
+  });
+
+  /* ---- Analytics hook: listen for Calendly postMessage events ---- */
+  window.addEventListener('message', e => {
+    if (e.origin !== 'https://calendly.com'
+        || !e.data.event
+        || !e.data.event.startsWith('calendly.')) return; // :contentReference[oaicite:4]{index=4}
+
+    console.log('📅', e.data.event, e.data.payload);
+
+    if (e.data.event === 'calendly.event_scheduled' && window.gtag) {
+      /* Example GA4 event */
+      gtag('event', 'calendly_booking', {
+        event_category : 'engagement',
+        event_label    : e.data.payload.event.uri
+      });
+    }
+  });
+})();
+</script>
+<!-- ========================================================= -->
+
+</body>
+</html>
